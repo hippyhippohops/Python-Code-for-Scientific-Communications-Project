@@ -1,0 +1,153 @@
+import numpy as np
+import math
+import pandas as pd
+
+def generate_deck(number_of_decks, deck_of_cards):
+    new_deck = []
+    counter = 1
+    for i in deck_of_cards:
+        #print(i)
+        while counter <= number_of_decks:
+            new_deck.append(i)
+            counter = counter + 1
+        counter = 1
+    return new_deck
+
+def create_partitions(points):
+    ceiling_of_point = math.floor(points / 2)
+    #print(ceiling_of_point)
+
+    # To create set of possibilities:
+    temp_integer_partitions = []
+    for i in range(1, ceiling_of_point + 1):
+        temp_partition = [i]
+        temp_partition.append(points - i)
+        temp_integer_partitions.append(temp_partition)
+    #print("Integer Partitions are:" + str(temp_integer_partitions))
+
+    for j in temp_integer_partitions:
+        if j[0] > 11 or j[1] > 11:
+            temp_integer_partitions.remove(j)
+
+    if points >= 12:
+        temp_partition = [11]
+        temp_partition.append(points-11)
+        temp_integer_partitions.append(temp_partition)
+
+    return temp_integer_partitions
+
+def calculate_probability(integer_partitions, n_copies_of_deck):
+    temp_probability = 0
+    for i in integer_partitions:
+        # print("We select this combination in the partition" + str(i))
+        first_card = i[0]
+        second_card = i[1]
+
+        if i[0] == 11:
+            first_card = 1
+        if i[1] == 11:
+            second_card = 1
+
+        # print("Total length of deck is" + str(len(n_copies_of_deck)))
+        # print(n_copies_of_deck.count(first_card))
+        # print(n_copies_of_deck.count(second_card))
+        # print(math.comb(len(n_copies_of_deck),n_copies_of_deck.count(first_card)))
+        # print(math.comb(len(n_copies_of_deck),n_copies_of_deck.count(second_card)))
+        probability_step_1 = math.comb(n_copies_of_deck.count(first_card), 1) * math.comb(
+            n_copies_of_deck.count(second_card), 1)
+        # print(probability_step_1)
+        probability_step_2 = probability_step_1 / math.comb(len(n_copies_of_deck), 2)
+        # print(probability_step_2)
+        temp_probability = temp_probability + probability_step_2
+    temp_probability = temp_probability / 2
+    # print("Probability is:" + str(temp_probability))
+    return temp_probability
+
+def create_possible_points_after_given_third_card(points):
+    temp_possible_points_after_getting_third_card = []
+    max_points_possible = min(11, 21-points)
+    for i in range(1,max_points_possible+1):
+        temp_possible_points_after_getting_third_card.append(i)
+    return temp_possible_points_after_getting_third_card
+
+def create_probability_to_points_dictionary(integer_partitions, number_of_decks, possible_points_after_getting_third_card, deck_of_cards):
+    dict_of_points_to_probability = dict()
+    #print("a" + str(possible_points_after_getting_third_card))
+    for j in possible_points_after_getting_third_card:
+        #print(j)
+        temp_probability = 0
+        for i in integer_partitions:
+            first_card = i[0]
+            second_card = i[1]
+
+            if i[0] == 11:
+                first_card = 1
+            if i[1] == 11:
+                second_card = 1
+
+            #Construct new deck
+
+            new_deck = []
+            counter = 1
+            for k in deck_of_cards:
+                # print(i)
+                if k != first_card and k != second_card:
+                    while counter <= number_of_decks:
+                        new_deck.append(k)
+                        counter = counter + 1
+                    counter = 1
+                else:
+                    counter = 2
+                    while counter <= number_of_decks:
+                        new_deck.append(k)
+                        counter = counter + 1
+                    counter = 2
+
+            #Calculating probability using new deck
+
+            probability_step_1 = math.comb(new_deck.count(j), 1)
+            # print(probability_step_1)
+            probability_step_2 = probability_step_1 / math.comb(len(new_deck), 1)
+            # print(probability_step_2)
+            temp_probability = temp_probability + probability_step_2
+            temp_probability = temp_probability / 2
+            #print(temp_probability)
+
+        dict_of_points_to_probability[j] = temp_probability
+    return dict_of_points_to_probability
+
+
+
+
+def main():
+    deck_of_cards = [1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10]
+
+    #Integer input n to create n no of decks
+    number_of_decks = int(input("Please input the number of decks\n"))
+    #print("The number of decks we require is:" + str(number_of_decks))
+
+    #Generate deck with n copies of cards
+    n_copies_of_deck = generate_deck(number_of_decks, deck_of_cards)
+    #print("Copies of deck is: " + str(n_copies_of_deck))
+
+    #Moving on to generate probabilities for 2 hand
+
+    #First to calculate the sum of possible integers given a number
+    for r in range(2,22):
+        #points = int(input("What points are we looking at?"))
+        points = r
+        integer_partitions = create_partitions(points)
+
+        #Given the points above, we now want to calculate the probability
+        probability_for_a_given_point = calculate_probability(integer_partitions, n_copies_of_deck)
+        #print(probability_for_a_given_point)
+
+        #To calculate the 3rd cards odds
+        possible_points_after_getting_third_card = create_possible_points_after_given_third_card(points)
+
+        probability_to_points_dictionary = create_probability_to_points_dictionary(integer_partitions, number_of_decks, possible_points_after_getting_third_card, deck_of_cards)
+        #print(probability_to_points_dictionary)
+
+        print("Point is:" + str(points))
+        print("Probability of getting the point: " + str(probability_for_a_given_point))
+        print("Probability of 3rd card points: " + str(probability_to_points_dictionary))
